@@ -45,10 +45,19 @@ button {
   background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
+  color: white; /* <--- CAMBIO: Color de texto de todos los botones a blanco */
 }
 
 button:hover {
   border-color: #646cff;
+}
+
+/* Estilo para los botones cuando están deshabilitados (ej. "Approving...", "Swapping...") */
+button:disabled {
+  background-color: #333;
+  color: #888;
+  cursor: not-allowed;
+  border-color: #444;
 }
 
 .connected-account {
@@ -66,12 +75,23 @@ button:hover {
   max-width: 480px;
 }
 
-.swap-container, .price-container {
+.swap-container, .price-container, .faucet-container { 
   background-color: #2d2d2d;
   padding: 1.5rem;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(134, 2, 2, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); 
+  border: 1px solid #444; /* Added a subtle border */
+  width: 100%; /* Make it take the full width of the main column */
 }
+
+.faucet-container h3 {
+  margin-top: 0;
+}
+
+.faucet-container p {
+  line-height: 1.4;
+}
+
 
 .input-group {
   display: flex;
