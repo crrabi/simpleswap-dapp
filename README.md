@@ -2,123 +2,87 @@
 
 ## 1. Project Overview 📜
 
-This repository contains the complete implementation of the **SimpleSwap DApp**, a full-stack project developed for Module 4. It includes a smart contract backend powered by Hardhat and a reactive frontend built with React, Vite, and ethers.js.
+This repository contains the complete implementation of the **SimpleSwap DApp**, a full-stack project built for Module 4 of the Ethereum Developer KIPU Program . It features a robust smart contract backend developed with Hardhat and a reactive, user-friendly frontend built with React, Vite, and Ethers.js.
 
-The primary goal of this project was to build a functional user interface for the `SimpleSwap` smart contract, while also implementing a robust testing environment to ensure contract reliability, achieving over 90% test coverage.
+The project's primary goal was to create a functional interface for a custom Automated Market Maker (AMM) smart contract. This involved not only frontend development but also a deep refinement of the smart contract based on professional feedback, the implementation of a comprehensive testing suite achieving over 95% coverage, and a live deployment to the Sepolia testnet.
 
-The project follows a **monorepo structure**, with distinct `backend` and `frontend` directories, allowing for modular and organized development.
-
-This document details the architecture, development process, and technical challenges overcome during the project's lifecycle.
+This document serves as a detailed technical summary of the project's architecture, development process, and the challenges overcome to achieve a production-quality result. The development was assisted by a generative AI model, which supported debugging, code optimization, and documentation.
 
 ---
 
-## 2. Smart Contract Backend ⚙️
+## 2. Smart Contract Architecture 🏛️
 
-The backend development was managed using **Hardhat**, a professional Ethereum development environment. The focus was on refining the smart contract based on expert feedback and building a comprehensive test suite.
+The backend development was focused on iterating and refining the `SimpleSwap` contract to meet the highest standards of security, gas efficiency, and DeFi best practices.
 
-### 2.1. Contract Refinement
+### 2.1. Final Deployed Contracts on Sepolia
 
-The initial `SimpleSwap` contract from Module 3 was significantly improved based on feedback from the professor, adhering to best practices in smart contract design:
+The on-chain infrastructure consists of three smart contracts, all successfully deployed and verified on the Sepolia testnet:
 
-1.  **Single-Pair Architecture:** The contract was refactored to manage only a single, immutable pair of tokens, which are set at deployment time. This simplified the logic, reduced gas costs, and minimized the attack surface by removing the complexity of multi-pool management (`_getPairId`, `_sortTokens`, etc.).
+1.  **`SimpleSwap` (LP Token - "SLP")**
+    *   **Address:** [`0x1ccAa460Db3E7340ef0d54a361ed208423D7Fa22`](https://sepolia.etherscan.io/address/0x1ccAa460Db3E7340ef0d54a361ed208423D7Fa22)
+    *   **Design:** An elegant AMM for a single, immutable token pair. Following advanced DeFi patterns, the contract inherits from OpenZeppelin's `ERC20.sol` standard, making the contract **itself** the Liquidity Pool (LP) token. This design choice makes liquidity positions fully composable and interoperable with the broader DeFi ecosystem.
+    *   **Optimizations:**
+        *   **Minimized State Reads:** All functions that modify state first load state variables (`reserves`, `totalSupply`) into memory once. All subsequent calculations use these memory variables, significantly reducing gas costs on `SLOAD` opcodes.
+        *   **Gas-Efficient Reverts:** `require` statements use short, concise error strings to minimize the contract's bytecode size and reduce deployment costs.
 
-2.  **ERC20-Compliant LP Token:** The contract now inherits from OpenZeppelin's standard `ERC20.sol` implementation. Instead of using a simple internal mapping to track liquidity providers' shares, the `SimpleSwap` contract **is** itself a fully-fledged, composable ERC20 token ("SimpleSwap LP Token" - `SLP`). This makes liquidity positions transferable and compatible with the broader DeFi ecosystem.
+2.  **`TestToken` Contracts (Token A & Token B)**
+    *   **Token A ("Token A", TKA):** [`0x557F10E00e315ec431d1ECf855d1B08674a0e43B`](https://sepolia.etherscan.io/address/0x557F10E00e315ec431d1ECf855d1B08674a0e43B)
+    *   **Token B ("Token B", TKB):** [`0x41461235F6C59750d841D5d59A3aD01fC95804e5`](https://sepolia.etherscan.io/address/0x41461235F6C59750d841D5d59A3aD01fC95804e5)
+    *   **Key Feature - Public Faucet:** Both token contracts include a public `claimTokens()` function. This allows **any user** to receive 100 free test tokens, with a 24-hour cooldown per address to prevent abuse. This feature was implemented to ensure the DApp is fully accessible and testable by anyone, fulfilling a key project requirement.
+As a final validation, the deployed `SimpleSwap` contract successfully passed all checks from the `SwapVerifier` contract of Module 3, with authorship recorded on-chain: **`authors[139] = crrabi-SimpleSwap_TP4fixedfaucet`**.
 
-The final, refined contract was successfully deployed and verified on the **Sepolia testnet** at the following address:
--   **`SimpleSwap Contract`: [`0xDc8b7749A4Aa978ab7d133e28D7348817F0E1793`](https://sepolia.etherscan.io/address/0xDc8b7749A4Aa978ab7d133e28D7348817F0E1793)**
--   As a final confirmation of its functionality, the deployed `SimpleSwap` contract was tested against the `SwapVerifier` contract from Module 3. The test was successful, and the authorship was recorded on-chain: **`authors[129] = crrabi-SimpleSwap_TP4`**.
+### 2.2. Test-Driven Development and Coverage
 
-### 2.2. Development and Testing Environment
+A comprehensive test suite was developed using Hardhat and Chai, going far beyond the minimum 50% coverage requirement. The process was iterative:
 
-The Hardhat environment was configured for professional development and testing on the Sepolia network.
+1.  **Initial Tests ("Happy Path"):** The first suite focused on successful execution of core functions, which revealed a low **Branch Coverage (~41%)**, indicating untested error conditions.
 
--   **Dependency Management:** Key dependencies such as `@openzeppelin/contracts`, `@nomicfoundation/hardhat-toolbox`, and `ethers` were installed to build upon secure and standard tools.
--   **Sepolia Configuration:** The `hardhat.config.ts` file was configured to connect to the Sepolia testnet. This involved creating a dedicated **RPC node via Infura** and managing private keys securely using a `.env` file.
--   **Deployment Script:** A streamlined deployment script (`scripts/deploy.ts`) was created. Since the ERC20 token contracts were already deployed and verified, this script was optimized to only deploy the `SimpleSwap` contract, referencing the pre-existing token addresses to save time and gas.
+2.  **Expanded Tests (Edge Cases & Reverts):** The test suite (`test/SimpleSwap.test.ts`) was systematically expanded with **16 total tests** to cover reverts and edge cases. This included testing for: expired deadlines, invalid parameters, insufficient balances, slippage protection, and all logical branches within the AMM calculations.
 
-### 2.3. Test-Driven Development and Coverage
+3.  **Final Coverage Results:** The final test suite achieved outstanding coverage metrics, demonstrating the contract's robustness:
+    -   **Statements: 96.67%**
+    -   **Branches: 76.47%**
+    -   **Functions: 100%**
+    -   **Lines: 97.33%**
 
-A primary requirement of this module was to achieve a test coverage of **at least 50%**. A comprehensive test suite was developed iteratively to exceed this goal significantly.
-
-1.  **Initial Tests (Happy Path):** The first set of tests focused on the "happy path" scenarios, ensuring that `addLiquidity`, `swapExactTokensForTokens`, and `removeLiquidity` worked as expected under normal conditions. This initial suite resulted in a coverage of `75% Statements` but only **`41% Branch`**. This indicated that error conditions and alternative logic paths were not being tested.
-
-2.  **Extended Tests (Edge Cases & Reverts):** To improve branch coverage, the test suite (`test/SimpleSwap.test.ts`) was expanded with new tests designed to trigger `require` statements and cover all logical branches. These included:
-    -   Testing for expired deadlines.
-    -   Verifying reverts when incorrect token addresses are used.
-    -   Testing the alternative calculation logic (`else` block) in `addLiquidity`.
-    -   Asserting that `swap` reverts with an invalid path or insufficient output amount.
-    -   Ensuring `removeLiquidity` reverts when a user has insufficient LP tokens or when the returned amount is below the specified minimum.
-    -   Checking that `getPrice` reverts correctly when the pool has no liquidity.
-
-This second iteration of tests boosted the metrics dramatically, achieving:
--   **Statements: 92.45%**
--   **Branches: 67.65%**
--   **Functions: 91.67%**
--   **Lines: 94.12%**
-
--   ![image](https://github.com/user-attachments/assets/5f1d4843-1ecc-49dc-931a-d5524c936491)
--   ![image](https://github.com/user-attachments/assets/da508efb-69ae-4893-a6d3-e33f7ba4d547)
--   ![image](https://github.com/user-attachments/assets/caaf0fea-8b8c-43ae-8a4e-2d174a020113)
--   ![image](https://github.com/user-attachments/assets/03f0dab2-395e-4f37-ac08-20f7c44953b9)
-
-
-These results far exceed the project requirements and demonstrate a robust and reliable smart contract.
+      <img width="852" height="363" alt="image" src="https://github.com/user-attachments/assets/bc640ab0-3149-41db-8958-a2f13e8475c5" />
+      <img width="822" height="457" alt="image" src="https://github.com/user-attachments/assets/8ddedfcc-c39b-4bb7-b3b8-4c34b763d394" />
+      <img width="810" height="649" alt="image" src="https://github.com/user-attachments/assets/ed1bddfa-4ccb-489e-9b3b-a9e02da7be0c" />
+      <img width="805" height="673" alt="image" src="https://github.com/user-attachments/assets/ac42b02d-1cf0-4a1a-9399-c3663b059081" />
 
 ---
 
 ## 3. Frontend Development 🖥️
 
-The frontend was built as a modern, reactive single-page application to provide an intuitive user interface for the `SimpleSwap` contract.
+The frontend provides a clean, intuitive, and reactive user interface for the `SimpleSwap` contract.
 
 ### 3.1. Technology Stack
 
--   **Framework:** **React** with **TypeScript** for robust, type-safe development.
--   **Build Tool:** **Vite** was chosen for its blazing-fast development server and optimized build process.
--   **Blockchain Interaction:** **Ethers.js v6** was used as the library to connect to the Ethereum blockchain, interact with contracts, and handle transactions.
+-   **Framework:** **React** with **TypeScript**
+-   **Build Tool:** **Vite** for a fast and modern development workflow.
+-   **Blockchain Interaction:** **Ethers.js v6** for connecting to user wallets and interacting with smart contracts.
 
-### 3.2. Project Structure & Setup
+### 3.2. Features & Components
 
--   **Component-Based Architecture:** The UI was broken down into logical components located in `frontend/src/components/`, including `SwapUI.tsx` for the main trading interface and `PriceViewer.tsx` for displaying real-time data.
--   **Configuration File:** A central `config.ts` file was created to store contract addresses and ABIs, making the application easy to configure and maintain.
+-   **Wallet Connection:** Securely connects to MetaMask and listens for account or network changes.
+-   **Live Price Viewer:** A `PriceViewer.tsx` component that periodically calls the `getPrice` function to display the real-time TKA/TKB exchange rate.
+-   **Token Swap UI:** A central `SwapUI.tsx` component that allows users to input an amount, see a live quote for the output (using `getAmountOut`), and execute a swap after token approval.
+-   **Public Faucet UI:** A `Faucet.tsx` component that provides a simple interface for any user to call the `claimTokens` function on the token contracts, making the DApp easy to test.
 
 ### 3.3. Key Implementation Challenges & Solutions
 
--   **ABI Imports in a Monorepo:** A common issue when working with a `backend`/`frontend` monorepo is that the frontend build tool (Vite) cannot access files outside its root directory.
-    -   **Solution:** A Node.js script, `copy-abis.mjs`, was created in the project root. This script copies the necessary contract ABI JSON files from `backend/artifacts/` into a new `frontend/src/abis/` directory.
-    -   The script was integrated into the `package.json` `dev` command to run automatically, ensuring the frontend always has the latest ABIs.
-    -   To make the script compatible with modern Node.js ES Modules, we used `import.meta.url`, `fileURLToPath`, and `path.dirname` to correctly resolve the project's directory path, fixing an initial `__dirname is not defined` error.
-
--   **Ethers.js v6 Compatibility:** During development, a runtime error `"Uncaught SyntaxError: The requested module ... does not provide an export named 'Signer'"` occurred.
-    -   **Solution:** This was identified as an incompatibility with how types are imported in Ethers.js v6 versus v5. The code was refactored to use the correct v6 pattern, e.g., `ethers.Signer` instead of importing `Signer` directly. This was applied to `App.tsx` and all child components to ensure a stable connection with MetaMask and the blockchain.
-
--   **Seeding Initial Liquidity:** After a successful local launch, it was noted that the DApp was not fully functional because the deployed `SimpleSwap` pool on Sepolia had no liquidity.
-    -   **Solution:** To test the full functionality, initial liquidity was provided directly on the Sepolia network. This was done by connecting MetaMask to **Etherscan's** "Write Contract" interface for the `TokenA`, `TokenB`, and `SimpleSwap` contracts to first `approve` token spending and then call `addLiquidity`. This prepared the on-chain state for the frontend to consume.
-
-This methodical approach to development and debugging resulted in a fully functional DApp that correctly interacts with live smart contracts on the Sepolia testnet.
+-   **Monorepo ABI Imports:** Resolved the "module not found" error from Vite by creating a `copy-abis.mjs` script. This script, compatible with modern ES Modules via `import.meta.url`, copies the contract ABIs from the `backend` to the `frontend` directory, making them accessible to the application.
+-   **Ethers.js v6 Compatibility:** Fixed a common runtime syntax error by refactoring type imports to use the correct `ethers.Signer` namespace, ensuring compatibility with the latest version of the library.
 
 ---
 
-## 4. Frontend Deployment 🚀
+## 4. Live Deployment and Access 🚀
 
-To make the SimpleSwap DApp publicly accessible, the frontend was deployed using **Vercel**, a platform renowned for its seamless integration with modern web development workflows and GitHub.
+The SimpleSwap DApp has been successfully deployed and is publicly accessible.
 
-### 4.1. Deployment Strategy
+-   **Platform:** **Vercel** was used to host the frontend, configured to build from the `frontend` directory of this monorepo.
+-   **Process:** Vercel automatically deploys new versions on every push to the `main` branch, creating a seamless CI/CD (Continuous Integration/Continuous Deployment) workflow.
 
-The deployment process was tailored for a monorepo structure, ensuring that only the frontend application was built and deployed.
+**You can access, test, and use the live DApp at the following URL:**
 
-1.  **Repository Preparation:** The project was pushed to a GitHub repository. A comprehensive `.gitignore` file was configured to exclude unnecessary files like `node_modules`, `.env` files, and backend build artifacts, keeping the repository clean and secure.
-
-2.  **Handling ABIs for Deployment:** Since Vercel's build environment cannot access the `backend` directory, a crucial step was taken to make the contract ABIs available to the frontend.
-    -   The local `copy:abis` script was run one final time to populate the `frontend/src/abis/` directory.
-    -   This `abis` directory, containing the `SimpleSwap.json` and `TestToken.json` files, was then committed and pushed to the GitHub repository. This ensures that the frontend has all the necessary information to interact with the smart contracts without needing access to the backend folder during the live deployment.
-
-3.  **Vercel Configuration:**
-    -   The GitHub repository was imported into a new Vercel project.
-    -   The **Root Directory** setting was configured to point specifically to the `frontend` folder, instructing Vercel to treat our React application as the source of the project.
-    -   Vercel's build system automatically detected the project as a **Vite** application and applied the correct build settings (`npm run build`) and output directory (`dist`) without needing further configuration.
-
-### 4.2. Live Application
-
-After a successful build and deployment process, the DApp is now live and fully functional on Vercel. It correctly connects to the Sepolia testnet via a user's browser wallet (like MetaMask) and interacts with the deployed smart contracts.
-
-**You can access the live DApp here: https://simpleswap-dapp-delta.vercel.app/**
+### **[https://simpleswap-dapp-delta.vercel.app/](https://simpleswap-dapp-delta.vercel.app/)**
