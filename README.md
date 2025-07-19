@@ -2,9 +2,9 @@
 
 ## 1. Project Overview 📜
 
-This repository contains the complete implementation of the **SimpleSwap DApp**, a full-stack project built for Module 4 of the Ethereum Developer KIPU Program . It features a robust smart contract backend developed with Hardhat and a reactive, user-friendly frontend built with React, Vite, and Ethers.js.
+This repository contains the complete implementation of the **SimpleSwap DApp**, a full-stack project built for Module 4 of the Ethereum KIPU Developer Pack. It features a robust smart contract backend developed with Hardhat and a reactive, user-friendly frontend built with React, Vite, and Ethers.js.
 
-The project's primary goal was to create a functional interface for a custom Automated Market Maker (AMM) smart contract. This involved not only frontend development but also a deep refinement of the smart contract based on professional feedback, the implementation of a comprehensive testing suite achieving over 95% coverage, and a live deployment to the Sepolia testnet.
+The project's primary goal was to create a functional interface for a custom Automated Market Maker (AMM) smart contract. This involved not only frontend development but also a deep refinement of the smart contract based on professional feedback, the implementation of a comprehensive testing suite achieving over 98% coverage, and a live deployment to the Sepolia testnet.
 
 This document serves as a detailed technical summary of the project's architecture, development process, and the challenges overcome to achieve a production-quality result. The development was assisted by a generative AI model, which supported debugging, code optimization, and documentation.
 
@@ -12,43 +12,73 @@ This document serves as a detailed technical summary of the project's architectu
 
 ## 2. Smart Contract Architecture 🏛️
 
-The backend development was focused on iterating and refining the `SimpleSwap` contract to meet the highest standards of security, gas efficiency, and DeFi best practices.
+The backend development was focused on iterating and refining the contracts to meet the highest standards of security, gas efficiency, and DeFi best practices.
 
 ### 2.1. Final Deployed Contracts on Sepolia
 
 The on-chain infrastructure consists of three smart contracts, all successfully deployed and verified on the Sepolia testnet:
 
 1.  **`SimpleSwap` (LP Token - "SLP")**
-    *   **Address:** [`0x1ccAa460Db3E7340ef0d54a361ed208423D7Fa22`](https://sepolia.etherscan.io/address/0x1ccAa460Db3E7340ef0d54a361ed208423D7Fa22)
-    *   **Design:** An elegant AMM for a single, immutable token pair. Following advanced DeFi patterns, the contract inherits from OpenZeppelin's `ERC20.sol` standard, making the contract **itself** the Liquidity Pool (LP) token. This design choice makes liquidity positions fully composable and interoperable with the broader DeFi ecosystem.
-    *   **Optimizations:**
-        *   **Minimized State Reads:** All functions that modify state first load state variables (`reserves`, `totalSupply`) into memory once. All subsequent calculations use these memory variables, significantly reducing gas costs on `SLOAD` opcodes.
-        *   **Gas-Efficient Reverts:** `require` statements use short, concise error strings to minimize the contract's bytecode size and reduce deployment costs.
+    *   **Address:** [`0x3A3c54b2A079774381Fe9Cc62FB092953D07f20c`](https://sepolia.etherscan.io/address/0x3A3c54b2A079774381Fe9Cc62FB092953D07f20c)
+    *   **Design:** An elegant AMM for a single, immutable token pair. It inherits from OpenZeppelin's `ERC20.sol` standard, making the contract **itself** a fully composable LP token. This makes liquidity positions transferable and compatible with the broader DeFi ecosystem.
 
 2.  **`TestToken` Contracts (Token A & Token B)**
-    *   **Token A ("Token A", TKA):** [`0x557F10E00e315ec431d1ECf855d1B08674a0e43B`](https://sepolia.etherscan.io/address/0x557F10E00e315ec431d1ECf855d1B08674a0e43B)
-    *   **Token B ("Token B", TKB):** [`0x41461235F6C59750d841D5d59A3aD01fC95804e5`](https://sepolia.etherscan.io/address/0x41461235F6C59750d841D5d59A3aD01fC95804e5)
-    *   **Key Feature - Public Faucet:** Both token contracts include a public `claimTokens()` function. This allows **any user** to receive 100 free test tokens, with a 24-hour cooldown per address to prevent abuse. This feature was implemented to ensure the DApp is fully accessible and testable by anyone, fulfilling a key project requirement.
-As a final validation, the deployed `SimpleSwap` contract successfully passed all checks from the `SwapVerifier` contract of Module 3, with authorship recorded on-chain: **`authors[139] = crrabi-SimpleSwap_TP4fixedfaucet`**.
+    *   **Token A ("Token A", TKA):** [`0x763a75Db7a2A8cd6E5fdd8f03537CdB1EeA124BC`](https://sepolia.etherscan.io/address/0x763a75Db7a2A8cd6E5fdd8f03537CdB1EeA124BC)
+    *   **Token B ("Token B", TKB):** [`0x3D14300bC1113EC49c9689eC3d1214636c79C91A`](https://sepolia.etherscan.io/address/0x3D14300bC1113EC49c9689eC3d1214636c79C91A)
 
-### 2.2. Test-Driven Development and Coverage
+### 2.2. Detailed Contract Breakdown
 
-A comprehensive test suite was developed using Hardhat and Chai, going far beyond the minimum 50% coverage requirement. The process was iterative:
+#### SimpleSwap Contract
 
-1.  **Initial Tests ("Happy Path"):** The first suite focused on successful execution of core functions, which revealed a low **Branch Coverage (~41%)**, indicating untested error conditions.
+The `SimpleSwap` contract is the core of the application, managing the liquidity pool and token swaps.
 
-2.  **Expanded Tests (Edge Cases & Reverts):** The test suite (`test/SimpleSwap.test.ts`) was systematically expanded with **16 total tests** to cover reverts and edge cases. This included testing for: expired deadlines, invalid parameters, insufficient balances, slippage protection, and all logical branches within the AMM calculations.
+-   **Key Functions:**
+    -   `addLiquidity()`: Allows users to deposit a pair of tokens and receive LP tokens in return. The logic differentiates between the first liquidity provider (who sets the price) and subsequent providers (who must match the existing price ratio).
+    -   `removeLiquidity()`: Allows users to burn their LP tokens to withdraw their proportional share of the underlying tokens.
+    -   `swapExactTokensForTokens()`: Executes a trade based on the constant product formula, allowing a user to swap a precise amount of one token for a calculated amount of the other.
+    -   `getReserves()`, `getPrice()`, `getAmountOut()`: Public read-only functions that provide crucial on-chain data for the frontend and other smart contracts.
 
-3.  **Final Coverage Results:** The final test suite achieved outstanding coverage metrics, demonstrating the contract's robustness:
-    -   **Statements: 96.67%**
-    -   **Branches: 76.47%**
+-   **Events:** To align with professional standards for on-chain observability, the contract emits events for every critical state change:
+    -   `AddLiquidity`: Fired when liquidity is successfully deposited.
+    -   `RemoveLiquidity`: Fired when liquidity is successfully withdrawn.
+    -   `Swap`: Fired every time a trade is executed.
+    These events are essential for frontends to track transaction outcomes and for off-chain services to index the contract's activity.
+
+-   **Gas and State Management Optimization:**
+    A core principle in the final design is the rigorous optimization of state reads to minimize gas costs.
+    -   **"Read-Once" Pattern:** In every state-changing function, all mutable state variables (like `reserveA`, `reserveB`, `totalSupply`) are read into local memory variables **once** at the beginning of the function. All subsequent logic within that function operates on these cheaper memory variables, avoiding repeated and costly `SLOAD` opcodes.
+    -   **Handling `immutable` vs. Mutable State:** Through investigation, it was confirmed that the Solidity compiler heavily optimizes reads from `immutable` variables (`tokenA`, `tokenB`). Therefore, the "read-once" pattern was consciously **not applied** to these variables, as it did not provide significant gas savings and would have introduced the risk of **"Stack Too Deep"** errors. This pragmatic approach avoids issues with the standard Remix compiler (without `viaIR` enabled) and keeps the code cleaner, while still optimizing the most expensive state reads.
+
+#### TestToken Contract
+
+The `TestToken` is a utility contract that enables the DApp to be fully functional and testable by anyone on the testnet.
+
+-   **Key Functions:**
+    -   `mint()`: An `onlyOwner` function for the contract administrator to create an initial supply or perform administrative minting.
+    -   **`claimTokens()` (Public Faucet):** The most important feature. This function allows **any user** to call it and receive 100 free test tokens. To prevent abuse, it includes a **24-hour cooldown** mechanism per address, making the DApp accessible without centralized token distribution.
+-   **Gas Optimizations:**
+    -   The `CLAIM_AMOUNT` and `COOLDOWN_PERIOD` are defined as `immutable` constants.
+    -   The `nextClaimTime` mapping uses `uint32` instead of `uint256`, significantly reducing the storage cost (`SSTORE`) for each faucet claim.
+
+### 2.3. Test-Driven Development and Coverage
+
+The project was developed with a strong emphasis on testing, using Hardhat and Chai to far exceed the minimum 50% coverage requirement.
+
+-   **Process:** The test suite evolved from covering only "happy path" scenarios (**~41% Branch Coverage**) to a comprehensive suite of **15 tests**. The final suite validates edge cases, slippage protection, and every single `require` statement.
+-   **Final Coverage Results:** The rigorous testing strategy culminated in outstanding coverage metrics:
+    -   **Statements: 98.46%**
+    -   **Branches: 79.41%**
     -   **Functions: 100%**
-    -   **Lines: 97.33%**
+    -   **Lines: 98.75%**
 
-      <img width="852" height="363" alt="image" src="https://github.com/user-attachments/assets/bc640ab0-3149-41db-8958-a2f13e8475c5" />
-      <img width="822" height="457" alt="image" src="https://github.com/user-attachments/assets/8ddedfcc-c39b-4bb7-b3b8-4c34b763d394" />
-      <img width="810" height="649" alt="image" src="https://github.com/user-attachments/assets/ed1bddfa-4ccb-489e-9b3b-a9e02da7be0c" />
-      <img width="805" height="673" alt="image" src="https://github.com/user-attachments/assets/ac42b02d-1cf0-4a1a-9399-c3663b059081" />
+As a final validation, the deployed `SimpleSwap` contract successfully passed all checks from the `SwapVerifier` contract from Module 3, with authorship recorded on-chain: **`authors[150] = crrabi_TP4fixedfaucetoptimized`**.
+
+<img width="867" height="419" alt="image" src="https://github.com/user-attachments/assets/f6829b19-49dd-4232-843c-af2772c20793" />
+<img width="853" height="570" alt="image" src="https://github.com/user-attachments/assets/8e8579eb-c7cf-4ef1-b108-ea529fb4f9ae" />
+<img width="853" height="301" alt="image" src="https://github.com/user-attachments/assets/d1224dd9-5e18-4e5e-8270-8e4dba0ffbb0" />
+<img width="832" height="617" alt="image" src="https://github.com/user-attachments/assets/713b736c-17b7-471a-bb8e-882cd21dcf9e" />
+
+
 
 ---
 
