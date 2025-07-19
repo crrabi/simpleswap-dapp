@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -11,21 +11,40 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * subject to a 24-hour cooldown period to prevent abuse.
  */
 contract TestToken is ERC20, Ownable {
-    // --- State for Faucet Cooldown ---
-    /// @notice Tracks the next timestamp when an address can claim tokens again.
-    mapping(address => uint256) public nextClaimTime;
+    // =================================================================================================
+    //                                      CONSTANTS
+    // =================================================================================================
 
-    // --- Events ---
+    /// @notice Fixed amount of tokens minted per claim (100 tokens with 18 decimals).
+    uint256 public immutable CLAIM_AMOUNT = 100 * 10**18;
+    /// @notice Cooldown period between claims (24 hours in seconds).
+    uint256 public immutable COOLDOWN_PERIOD = 24 hours;
+
+    // =================================================================================================
+    //                                      STATE VARIABLE
+    // =================================================================================================
+    /// @notice Tracks the next timestamp when an address can claim tokens again (uint32 for gas savings).
+    mapping(address => uint32) public nextClaimTime;
+
+    // =================================================================================================
+    //                                             EVENT
+    // =================================================================================================
+
     /// @notice Emitted when a user successfully claims tokens from the faucet.
-    event TokensClaimed(address indexed recipient, uint256 amount);
+    event TokensClaimed(address indexed recipient);
 
-    // --- Constructor ---
+    // =================================================================================================
+    //                                           CONSTRUCTOR
+    // =================================================================================================
+
     constructor(string memory name, string memory symbol) ERC20(name, symbol) Ownable(msg.sender) {}
 
-    // --- Owner-Only Minting ---
+    // =================================================================================================
+    //                                  PUBLIC STATE-CHANGING FUNCTIONS
+    // =================================================================================================
+
     /**
      * @notice Allows the contract owner to mint any amount of tokens.
-     * @dev This is for initial setup or administrative purposes.
      * @param to The address that will receive the new tokens.
      * @param amount The quantity of tokens to create.
      */
@@ -33,23 +52,24 @@ contract TestToken is ERC20, Ownable {
         _mint(to, amount);
     }
     
-    // --- Public Faucet Function ---
     /**
      * @notice Allows any user to claim a fixed amount of tokens for free.
      * @dev A 24-hour cooldown is enforced per address to prevent draining the token supply.
      */
     function claimTokens() external {
-        // Cooldown check: Prevents the same user from claiming tokens too frequently.
-        require(block.timestamp >= nextClaimTime[msg.sender], "WAIT_24H");
+        // Cache msg.sender for gas savings
+        address sender = msg.sender;
         
-        // Set the next available claim time for this user to 24 hours from now.
-        nextClaimTime[msg.sender] = block.timestamp + 24 hours;
+        // Cooldown check using uint32
+        require(block.timestamp >= uint256(nextClaimTime[sender]), "WAIT_24H");
+        
+        // Set next claim time (uint32 to reduce storage cost)
+        nextClaimTime[sender] = uint32(block.timestamp + COOLDOWN_PERIOD);
 
-        // Mint 100 new tokens to the caller.
-        uint256 claimAmount = 100 * 10**18;
-        _mint(msg.sender, claimAmount);
+        // Mint fixed amount
+        _mint(sender, CLAIM_AMOUNT);
 
-        // Emit an event to log the faucet usage.
-        emit TokensClaimed(msg.sender, claimAmount);
+        // Emit simplified event
+        emit TokensClaimed(sender);
     }
 }

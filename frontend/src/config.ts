@@ -6,6 +6,6 @@ export const SimpleSwapABI = SimpleSwapAbiJson.abi;
 export const TokenABI = TestTokenAbiJson.abi;
 
 
-export const SimpleSwapAddress = "0x1ccAa460Db3E7340ef0d54a361ed208423D7Fa22";
-export const TokenAAddress = "0x557F10E00e315ec431d1ECf855d1B08674a0e43B";
-export const TokenBAddress = "0x41461235F6C59750d841D5d59A3aD01fC95804e5";
+export const SimpleSwapAddress = "0x3A3c54b2A079774381Fe9Cc62FB092953D07f20c";
+export const TokenAAddress = "0x763a75Db7a2A8cd6E5fdd8f03537CdB1EeA124BC";
+export const TokenBAddress = "0x3D14300bC1113EC49c9689eC3d1214636c79C91A";

@@ -2,8 +2,8 @@ import { ethers } from "hardhat";
 import "dotenv/config";
 
 
-const TOKEN_A_ADDRESS = "0xEC993982Ad62f64Da247bf396868e66a88C69D59";
-const TOKEN_B_ADDRESS = "0xb68350a0Ca15E9C6e3524c012ef0fA78f2F87d50";
+const TOKEN_A_ADDRESS = "0x763a75Db7a2A8cd6E5fdd8f03537CdB1EeA124BC";
+const TOKEN_B_ADDRESS = "0x3D14300bC1113EC49c9689eC3d1214636c79C91A";
 
 
 async function main() {
