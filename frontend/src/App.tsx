@@ -97,6 +97,7 @@ function App() {
           <>
             <SwapUI signer={state.signer} />
             <PriceViewer provider={state.provider!} />
+            <PoolInfo provider={state.provider!} />
             <Faucet signer={state.signer} /> {/* --- STEP 2: Render the Faucet component here --- */}
           </>
         ) : (
