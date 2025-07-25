@@ -3,6 +3,7 @@ import { ethers, BrowserProvider } from 'ethers';
 import './App.css';
 import { SwapUI } from './components/SwapUI';
 import { PriceViewer } from './components/PriceViewer';
+import { PoolInfo } from './components/PoolInfo';
 import { Faucet } from './components/Faucet'; // --- STEP 1: Import the new Faucet component ---
 
 // Define the type for the application's state to ensure type safety
