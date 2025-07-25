@@ -84,25 +84,30 @@ As a final validation, the deployed `SimpleSwap` contract successfully passed al
 
 ## 3. Frontend Development 🖥️
 
-The frontend provides a clean, intuitive, and reactive user interface for the `SimpleSwap` contract.
+The frontend provides a clean, intuitive, and fully-featured user interface for the `SimpleSwap` contract.
 
 ### 3.1. Technology Stack
 
 -   **Framework:** **React** with **TypeScript**
--   **Build Tool:** **Vite** for a fast and modern development workflow.
--   **Blockchain Interaction:** **Ethers.js v6** for connecting to user wallets and interacting with smart contracts.
+-   **Build Tool:** **Vite**
+-   **Blockchain Interaction:** **Ethers.js v6**
 
-### 3.2. Features & Components
+### 3.2. Final Features & Components
 
--   **Wallet Connection:** Securely connects to MetaMask and listens for account or network changes.
--   **Live Price Viewer:** A `PriceViewer.tsx` component that periodically calls the `getPrice` function to display the real-time TKA/TKB exchange rate.
--   **Token Swap UI:** A central `SwapUI.tsx` component that allows users to input an amount, see a live quote for the output (using `getAmountOut`), and execute a swap after token approval.
--   **Public Faucet UI:** A `Faucet.tsx` component that provides a simple interface for any user to call the `claimTokens` function on the token contracts, making the DApp easy to test.
+The final DApp includes a complete set of features for a functional user experience:
+
+-   **Wallet Connection:** Securely connects to MetaMask and gracefully handles account and network changes.
+-   **Bidirectional Swapping:** The core `SwapUI.tsx` component now allows users to swap not only from **Token A to Token B**, but also from **Token B to Token A**, thanks to a "flip" button that dynamically updates the trade path and logic.
+-   **Real-time Data Display:**
+    -   A `PriceViewer.tsx` component that periodically calls `getPrice` to show the live exchange rate.
+    -   **A new `PoolInfo.tsx` component** that displays the total liquidity of the pool by fetching the current `reserves` and the total `totalSupply` of the LP tokens. This adds a crucial layer of transparency for users.
+-   **Public Faucet UI:** A `Faucet.tsx` component provides a simple "one-click" interface for any user to claim free test tokens, enabling seamless onboarding.
+-   **Fully Responsive Design:** The entire application was styled with a **mobile-first approach** using CSS media queries. The layout automatically adjusts on screens smaller than 600px, stacking elements and resizing fonts to ensure a smooth and accessible experience on any device without horizontal scrolling.
 
 ### 3.3. Key Implementation Challenges & Solutions
 
--   **Monorepo ABI Imports:** Resolved the "module not found" error from Vite by creating a `copy-abis.mjs` script. This script, compatible with modern ES Modules via `import.meta.url`, copies the contract ABIs from the `backend` to the `frontend` directory, making them accessible to the application.
--   **Ethers.js v6 Compatibility:** Fixed a common runtime syntax error by refactoring type imports to use the correct `ethers.Signer` namespace, ensuring compatibility with the latest version of the library.
+-   **Monorepo ABI Imports:** Resolved a Vite build error by creating a `copy-abis.mjs` script to copy contract ABIs from the `backend` to a local `frontend/src/abis/` directory.
+-   **Ethers.js v6 Compatibility:** Fixed a common runtime error by refactoring type imports to use the correct `ethers.Signer` namespace, ensuring compatibility with the latest version of the library.
 
 ---
 
@@ -111,7 +116,7 @@ The frontend provides a clean, intuitive, and reactive user interface for the `S
 The SimpleSwap DApp has been successfully deployed and is publicly accessible.
 
 -   **Platform:** **Vercel** was used to host the frontend, configured to build from the `frontend` directory of this monorepo.
--   **Process:** Vercel automatically deploys new versions on every push to the `main` branch, creating a seamless CI/CD (Continuous Integration/Continuous Deployment) workflow.
+-   **Process:** Vercel automatically deploys new versions on every push to the `main` branch, creating a seamless CI/CD workflow.
 
 **You can access, test, and use the live DApp at the following URL:**
 
