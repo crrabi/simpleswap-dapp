@@ -5,6 +5,15 @@
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
+  /* Ensure the body takes full viewport height */
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
 }
 
 #root {
@@ -12,6 +21,7 @@
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  width: 100%;
 }
 
 .App {
@@ -33,6 +43,7 @@
 .App-header h1 {
   margin: 0;
   font-size: 1.8rem;
+  white-space: nowrap; /* Prevents title from breaking into two lines */
 }
 
 button {
@@ -45,14 +56,14 @@ button {
   background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
-  color: white; /* <--- CAMBIO: Color de texto de todos los botones a blanco */
+  color: white;
+  white-space: nowrap; /* Prevents button text from wrapping */
 }
 
 button:hover {
   border-color: #646cff;
 }
 
-/* Estilo para los botones cuando están deshabilitados (ej. "Approving...", "Swapping...") */
 button:disabled {
   background-color: #333;
   color: #888;
@@ -65,6 +76,7 @@ button:disabled {
   padding: 0.5em 1em;
   border-radius: 12px;
   font-size: 0.9em;
+  white-space: nowrap;
 }
 
 .App-main {
@@ -75,23 +87,20 @@ button:disabled {
   max-width: 480px;
 }
 
-.swap-container, .price-container, .faucet-container { 
+/* Base styles for the "card" components */
+.swap-container, .price-container, .faucet-container {
   background-color: #2d2d2d;
   padding: 1.5rem;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); 
-  border: 1px solid #444; /* Added a subtle border */
-  width: 100%; /* Make it take the full width of the main column */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 1px solid #444;
+  width: 100%;
+  box-sizing: border-box; /* This is key for responsive design */
 }
 
-.faucet-container h3 {
-  margin-top: 0;
+.faucet-container {
+  margin-top: 1rem;
 }
-
-.faucet-container p {
-  line-height: 1.4;
-}
-
 
 .input-group {
   display: flex;
@@ -107,11 +116,50 @@ button:disabled {
 }
 
 input {
-  width: calc(100% - 20px);
-  padding: 10px;
+  width: 100%; /* Changed from calc() to be simpler */
+  box-sizing: border-box; /* Ensures padding is inside the width */
+  padding: 12px;
   font-size: 1.2rem;
   border-radius: 8px;
   border: 1px solid #444;
   background-color: #1a1a1a;
   color: white;
+}
+
+/* ================================== */
+/* --- MOBILE STYLES (RESPONSIVE) --- */
+/* ================================== */
+
+/* This applies styles ONLY when the screen is 600px wide or less */
+@media (max-width: 600px) {
+  #root {
+    padding: 1rem; /* Reduce padding on small screens */
+  }
+
+  .App-header {
+    flex-direction: column; /* Stack header elements */
+    gap: 1rem;
+    align-items: center;
+  }
+  
+  .App-header h1 {
+    font-size: 1.5rem; /* Make the title slightly smaller */
+  }
+
+  /* Make containers and inputs have slightly less padding */
+  .swap-container, .price-container, .faucet-container {
+    padding: 1rem;
+  }
+
+  input {
+    font-size: 1rem;
+  }
+
+  button {
+    font-size: 0.9rem;
+  }
+
+  .connected-account {
+    font-size: 0.8em;
+  }
 }
